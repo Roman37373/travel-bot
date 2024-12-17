@@ -1,6 +1,6 @@
-import TelegramBot from 'node-telegram-bot-api';
 import path from 'node:path';
 import fs from 'node:fs/promises';
+import TelegramBot from 'node-telegram-bot-api';
 import {chatCreateItem, chatGetItem} from './chat.js';
 import {messageCreateItem, messageGetList, messageUpdateItem} from './message.js';
 import {assistantProcess} from './assistant.js';

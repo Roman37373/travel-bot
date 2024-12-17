@@ -1,3 +1,5 @@
+import {ollamaProcess} from './ollama.js';
+
 export async function assistantProcess(messages = []) {
-  return 'answer';
+  return await ollamaProcess(messages);
 }
