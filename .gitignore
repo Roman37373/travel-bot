@@ -1,6 +1,9 @@
 # Idea
 .idea
 
+# Temp files
+tmp
+
 # Logs
 logs
 *.log

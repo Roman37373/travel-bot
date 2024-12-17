@@ -1,9 +1,9 @@
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import TelegramBot from 'node-telegram-bot-api';
-import {chatCreateItem, chatGetItem} from './chat.js';
-import {messageCreateItem, messageGetList, messageUpdateItem} from './message.js';
-import {assistantProcess} from './assistant.js';
+import {chatCreateItem, chatGetItem} from './api/chat.js';
+import {messageCreateItem, messageGetList, messageUpdateItem} from './api/message.js';
+import {assistantProcess} from './api/assistant.js';
 import {TELEGRAM_TOKEN} from './config.js';
 
 
@@ -63,17 +63,24 @@ async function onMessage(msg) {
     content: msg.text,
   });
 
-  const answer = await assistantProcess(messages);
+  const [answer, waitMessage] = await Promise.all([
+    assistantProcess(messages),
+    bot.sendMessage(chat._id, '🤔 Дайте подумать...'),
+  ]);
+  if (waitMessage && waitMessage.message_id) {
+    await bot.deleteMessage(chat._id, waitMessage.message_id);
+  }
 
-  await messageUpdateItem(chat._id, message.messageIndex, answer);
-  await bot.sendMessage(chat._id, answer);
+  await Promise.all([
+    messageUpdateItem(chat._id, message.messageIndex, answer),
+    bot.sendMessage(chat._id, answer),
+  ]);
 }
 
 ////
 
 async function bootstrap() {
-  systemPrompt = await fs.readFile(path.join(import.meta.dirname, 'prompt.md'), 'utf8');
-
+  systemPrompt = await fs.readFile(path.join(import.meta.dirname, '..', 'data', 'prompt.md'), 'utf8');
   bot.on('polling_error', onPollingError);
   bot.on('message', onMessage);
   await bot.startPolling({restart: true});
