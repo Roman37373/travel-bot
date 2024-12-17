@@ -50,6 +50,6 @@ async function onMessage(msg) {
 
   const answer = await assistantProcess(messages);
 
-  await messageUpdateItem(message._id, answer);
+  await messageUpdateItem(chat._id, message.messageIndex, answer);
   await bot.sendMessage(chat._id, answer);
 }

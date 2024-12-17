@@ -1,20 +1,28 @@
+const chatMessages = {};
 
 export async function messageCreateItem(chatId, text) {
-  return {
-    _id: 123,
-    chatId,
+  if (!chatMessages[chatId]) {
+    chatMessages[chatId] = [];
+  }
+  const message = {
+    messageIndex: chatMessages[chatId].length,
     created: Date.now(),
+    stamp: Date.now(),
     text,
   };
+  chatMessages[chatId].push(message);
+  return message;
 }
 
-export async function messageUpdateItem(_id, answer) {
-  // return {
-  //   stamp: Date.now(),
-  //   answer,
-  // };
+export async function messageUpdateItem(chatId, messageIndex, answer) {
+  if (chatMessages[chatId] && chatMessages[chatId][messageIndex]) {
+    chatMessages[chatId][messageIndex].stamp = Date.now();
+    chatMessages[chatId][messageIndex].answer = answer;
+  } else {
+    throw new Error(`Message is not exists`);
+  }
 }
 
 export async function messageGetList(chatId) {
-  return [];
+  return chatMessages.hasOwnProperty(chatId) ? chatMessages[chatId].slice() : [];
 }
