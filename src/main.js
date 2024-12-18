@@ -4,16 +4,12 @@ import TelegramBot from 'node-telegram-bot-api'; // Библиотека для 
 import {chatCreateItem, chatGetItem} from './api/chat.js';  // Модуль для работы с чатом
 import {messageCreateItem, messageGetList, messageUpdateItem} from './api/message.js'; // Модуль для работы с сообщением
 import {assistantProcess} from './api/assistant.js';  // Модуль для работы с асистонтом LLM
-import {TELEGRAM_TOKEN, VSEGPT_TOKEN} from './config.js'; // Файл конфигурации
+import {TELEGRAM_TOKEN} from './config.js'; // Файл конфигурации
+
 
 if(!TELEGRAM_TOKEN) {
   throw new Error('TELEGRAM_TOKEN is required');
 }
-if(!VSEGPT_TOKEN) {
-  throw new Error('VSEGPT_TOKEN is required');
-}
-
-////
 
 const bot = new TelegramBot(TELEGRAM_TOKEN, {
   polling: false,

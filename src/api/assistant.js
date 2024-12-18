@@ -1,5 +1,6 @@
 import {ollamaProcess} from '../tools/ollama.js'; // Модуль для работы Ollama
 import {openaiProcess} from '../tools/vsegpt.js'; // Модуль для работы с сервисом vsegpt
+import {VSEGPT_TOKEN} from '../config.js';
 
 /**
  * Возвращает результат обработки отправленного контекста нейронкой, с возможностью выбора сервиса
@@ -9,10 +10,10 @@ import {openaiProcess} from '../tools/vsegpt.js'; // Модуль для раб�
  */
 export async function assistantProcess(service, messages = []) {
   switch (service) {
-    case 'ollama':
-      return await ollamaProcess(messages);
     case 'vsegpt':
-      return await openaiProcess(messages);
+      if (VSEGPT_TOKEN) {
+        return await openaiProcess(messages);
+      }
   }
-  throw new Error('Bad service');
+  return await ollamaProcess(messages);
 }
