@@ -1,5 +1,11 @@
 const chatMessages = {};
 
+/**
+ * Сохраняет сообщение чата
+ * @param chatId
+ * @param text
+ * @returns {Promise<{messageIndex, created: number, stamp: number, text}>}
+ */
 export async function messageCreateItem(chatId, text) {
   if (!chatMessages[chatId]) {
     chatMessages[chatId] = [];
@@ -14,6 +20,13 @@ export async function messageCreateItem(chatId, text) {
   return message;
 }
 
+/**
+ * Сохранет ответ в существующее сообщение
+ * @param chatId
+ * @param messageIndex
+ * @param answer
+ * @returns {Promise<void>}
+ */
 export async function messageUpdateItem(chatId, messageIndex, answer) {
   if (chatMessages[chatId] && chatMessages[chatId][messageIndex]) {
     chatMessages[chatId][messageIndex].stamp = Date.now();
@@ -23,6 +36,11 @@ export async function messageUpdateItem(chatId, messageIndex, answer) {
   }
 }
 
+/**
+ * Возвращает сообщения чата
+ * @param chatId
+ * @returns {Promise<*|*[]>}
+ */
 export async function messageGetList(chatId) {
   return chatMessages.hasOwnProperty(chatId) ? chatMessages[chatId].slice() : [];
 }

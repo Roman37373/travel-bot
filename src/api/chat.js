@@ -1,9 +1,19 @@
 const chatData = {};
 
+/**
+ * Возврщает данные чата
+ * @param _id
+ * @returns {Promise<*>}
+ */
 export async function chatGetItem(_id) {
   return chatData[_id];
 }
 
+/**
+ * Сохраняет данные чата
+ * @param data
+ * @returns {Promise<*>}
+ */
 export async function chatCreateItem(data = {}) {
   const _id = data.id;
   if (!_id) {
@@ -34,6 +44,12 @@ export async function chatCreateItem(data = {}) {
   return await chatGetItem(_id);
 }
 
+/**
+ * Обновляет данные чата
+ * @param _id
+ * @param patch
+ * @returns {Promise<void>}
+ */
 export async function chatUpdateItem(_id, patch = {}) {
   const oldItem = await chatGetItem(_id);
   if (!oldItem) {
