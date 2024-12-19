@@ -55,6 +55,12 @@ async function onMessage(msg) {
   // Подгружаем старые собщения чата
   const oldMessages = await messageGetList(chat._id);
 
+  // Ограничиваем возможность задавать вопросы пользователем до получения ответа от нейронки
+  if (oldMessages.length && !oldMessages[oldMessages.length - 1].answer) {
+    await bot.sendMessage(chat._id, '🤔 Подождите, я еще думаю...');
+    return;
+  }
+
   // Создаем новое сообщение для чата
   const message = await messageCreateItem(chat._id, msg.text);
 
@@ -83,8 +89,11 @@ async function onMessage(msg) {
     content: msg.text,
   });
 
-  const [answer, waitMessage] = await Promise.all([
-    assistantProcess('vsegpt', messages), // Отправляем контекст и ждем ответ
+  const [
+    answer,
+    waitMessage,
+  ] = await Promise.all([
+    assistantProcess('ollama', messages), // Отправляем контекст и ждем ответ
     bot.sendMessage(chat._id, '🤔 Дайте подумать...'), // Отправляем пользователю сообщение заглушку
   ]);
   if (waitMessage && waitMessage.message_id) {
