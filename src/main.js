@@ -1,9 +1,7 @@
-import path from 'node:path';  // Библиотека для работы с путями
-import fs from 'node:fs/promises';  // Библиотека для работы с файловой системой
-import TelegramBot from 'node-telegram-bot-api'; // Библиотека для работы с телеграммом
+import TelegramBot from 'node-telegram-bot-api'; // Библиотека для работы с Telegram
 import {chatCreateItem, chatGetItem} from './api/chat.js';  // Модуль для работы с чатом
 import {messageCreateItem, messageGetList, messageUpdateItem} from './api/message.js'; // Модуль для работы с сообщением
-import {assistantProcess} from './api/assistant.js';  // Модуль для работы с асистонтом LLM
+import {assistantProcess, initAssistant} from './api/assistant.js';  // Модуль для работы с ассистентом LLM
 import {TELEGRAM_TOKEN} from './config.js'; // Файл конфигурации
 
 
@@ -15,7 +13,6 @@ const bot = new TelegramBot(TELEGRAM_TOKEN, {
   polling: false,
   webHook: false,
 });
-let systemPrompt = '';
 
 /**
  * Обработка ошибок Telegram
@@ -65,12 +62,7 @@ async function onMessage(msg) {
   const message = await messageCreateItem(chat._id, msg.text);
 
   // Создаем контекст сообщений чата
-  const messages = [
-    {
-      role: 'system',
-      content: systemPrompt,
-    },
-  ];
+  const messages = [];
   for (const message of oldMessages) {
     if (!(message.text && message.answer && !message.error)) {
       continue;
@@ -111,10 +103,10 @@ async function onMessage(msg) {
  * @returns {Promise<void>}
  */
 async function bootstrap() {
-  // Подгружаем промт из файла
-  systemPrompt = await fs.readFile(path.join(import.meta.dirname, '..', 'data', 'prompt.md'), 'utf8');
+  // Подготавливаем к работе ассистента
+  await initAssistant();
 
-  // устанавливаем обработчики и запускаем соединение с Telegram
+  // Устанавливаем обработчики и запускаем соединение с Telegram
   bot.on('polling_error', onPollingError);
   bot.on('message', onMessage);
   await bot.startPolling({restart: true});
