@@ -1,4 +1,4 @@
-const chatMessages = {};
+import {mongoInsertOne, mongoUpdateOne, mongoGetList} from '../tools/mongo.js';
 
 /**
  * Сохраняет сообщение чата
@@ -7,33 +7,33 @@ const chatMessages = {};
  * @returns {Promise<{messageIndex, created: number, stamp: number, text}>}
  */
 export async function messageCreateItem(chatId, text) {
-  if (!chatMessages[chatId]) {
-    chatMessages[chatId] = [];
-  }
-  const message = {
-    messageIndex: chatMessages[chatId].length,
+  const $set = {
     created: Date.now(),
     stamp: Date.now(),
+    chatId,
     text,
   };
-  chatMessages[chatId].push(message);
-  return message;
+  const res = await mongoInsertOne('message', $set);
+  if (res?.insertedId) {
+    $set._id = res.insertedId;
+    return $set;
+  }
 }
 
 /**
  * Сохранет ответ в существующее сообщение
- * @param chatId
- * @param messageIndex
+ * @param _id
  * @param answer
  * @returns {Promise<void>}
  */
-export async function messageUpdateItem(chatId, messageIndex, answer) {
-  if (chatMessages[chatId] && chatMessages[chatId][messageIndex]) {
-    chatMessages[chatId][messageIndex].stamp = Date.now();
-    chatMessages[chatId][messageIndex].answer = answer;
-  } else {
-    throw new Error(`Message is not exists`);
-  }
+export async function messageUpdateItem(_id, answer) {
+  const $set = {
+    stamp: Date.now(),
+    answer: answer,
+  };
+  await mongoUpdateOne('message', {_id}, $set);
+  // chatMessages[chatId][messageIndex].stamp = Date.now();
+  // chatMessages[chatId][messageIndex].answer = answer;
 }
 
 /**
@@ -42,5 +42,5 @@ export async function messageUpdateItem(chatId, messageIndex, answer) {
  * @returns {Promise<*|*[]>}
  */
 export async function messageGetList(chatId) {
-  return chatMessages.hasOwnProperty(chatId) ? chatMessages[chatId].slice() : [];
+  return await mongoGetList('message', {chatId}, {stamp: -1}, 3);
 }

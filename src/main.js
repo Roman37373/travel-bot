@@ -1,6 +1,7 @@
 import TelegramBot from 'node-telegram-bot-api'; // Библиотека для работы с Telegram
 import {chatCreateItem, chatGetItem} from './api/chat.js';  // Модуль для работы с чатом
 import {messageCreateItem, messageGetList, messageUpdateItem} from './api/message.js'; // Модуль для работы с сообщением
+import {initMongo} from './tools/mongo.js';
 import {assistantProcess, initAssistant} from './api/assistant.js';  // Модуль для работы с ассистентом LLM
 import {TELEGRAM_TOKEN} from './config.js'; // Файл конфигурации
 
@@ -49,11 +50,11 @@ async function onMessage(msg) {
     return;
   }
 
-  // Подгружаем старые собщения чата
+  // Подгружаем старые сообщения чата
   const oldMessages = await messageGetList(chat._id);
 
   // Ограничиваем возможность задавать вопросы пользователем до получения ответа от нейронки
-  if (oldMessages.length && !oldMessages[oldMessages.length - 1].answer) {
+  if (oldMessages.length && !oldMessages[0].answer) {
     await bot.sendMessage(chat._id, '🤔 Подождите, я еще думаю...');
     return;
   }
@@ -63,7 +64,9 @@ async function onMessage(msg) {
 
   // Создаем контекст сообщений чата
   const messages = [];
-  for (const message of oldMessages) {
+  let i = oldMessages.length;
+  while (i--) {
+    const message = oldMessages[i];
     if (!(message.text && message.answer && !message.error)) {
       continue;
     }
@@ -85,7 +88,7 @@ async function onMessage(msg) {
     answer,
     waitMessage,
   ] = await Promise.all([
-    assistantProcess('ollama', messages), // Отправляем контекст и ждем ответ
+    assistantProcess('vsegpt', messages), // Отправляем контекст и ждем ответ
     bot.sendMessage(chat._id, '🤔 Дайте подумать...'), // Отправляем пользователю сообщение заглушку
   ]);
   if (waitMessage && waitMessage.message_id) {
@@ -93,7 +96,7 @@ async function onMessage(msg) {
   }
 
   await Promise.all([
-    messageUpdateItem(chat._id, message.messageIndex, answer), // Сохраняем ответ
+    messageUpdateItem(message._id, answer), // Сохраняем ответ
     bot.sendMessage(chat._id, answer), // Отправляем ответ пользователю
   ]);
 }
@@ -103,6 +106,9 @@ async function onMessage(msg) {
  * @returns {Promise<void>}
  */
 async function bootstrap() {
+  //
+  await initMongo();
+
   // Подготавливаем к работе ассистента
   await initAssistant();
 

@@ -1,4 +1,4 @@
-const chatData = {};
+import {mongoFindOne, mongoInsertOne, mongoUpdateOne} from '../tools/mongo.js';
 
 /**
  * Возврщает данные чата
@@ -6,7 +6,8 @@ const chatData = {};
  * @returns {Promise<*>}
  */
 export async function chatGetItem(_id) {
-  return chatData[_id];
+  return await mongoFindOne('chat', {_id});
+  // return chatData[_id];
 }
 
 /**
@@ -40,7 +41,8 @@ export async function chatCreateItem(data = {}) {
     $set.last_name = data.last_name;
   }
 
-  chatData[_id] = $set;
+  // chatData[_id] = $set;
+  await mongoInsertOne('chat', $set);
   return await chatGetItem(_id);
 }
 
@@ -72,8 +74,6 @@ export async function chatUpdateItem(_id, patch = {}) {
   if (oldItem.last_name !== patch.last_name) {
     $set.last_name = patch.last_name;
   }
-
-  Object.keys($set).forEach(key => {
-    chatData[_id][key] = $set[key];
-  });
+  await mongoUpdateOne('chat', {_id}, $set);
+  return await chatGetItem(_id);
 }
