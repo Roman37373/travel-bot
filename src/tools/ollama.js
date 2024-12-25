@@ -2,12 +2,20 @@ import ollama from 'ollama';  // Библиотека для работы с с�
 
 /**
  * Возвращает результата обработки отправленного контекста нейронкой
+ * @param model
  * @param messages
  * @returns {Promise<string>}
  */
-export async function ollamaProcess(messages = []) {
+export async function ollamaProcess(model, messages = []) {
+  switch (model) {
+    case 't-lite-q4':
+      break;
+    default:
+      model = 'qwen2.5:7b';
+      break
+  }
   const response = await ollama.chat({
-    model: 'qwen2.5:7b',
+    model,
     messages,
   });
   return response.message.content;

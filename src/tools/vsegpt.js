@@ -14,14 +14,19 @@ export const openai = new OpenAI(openaiConfig);
 
 /**
  * Возвращает результата обработки отправленного контекста нейронкой
+ * @param model - llm model
  * @param messages - контекст
  * @returns {Promise<string>} - ответ на контекст
  */
-export async function openaiProcess(messages = []) {
+export async function openaiProcess(model, messages = []) {
+  switch (model) {
+    default:
+      model = 'openai/gpt-4o-mini';
+  }
   const completion = await openai.chat.completions.create({
     messages,
+    model,
     max_tokens: 1024,
-    model: 'openai/gpt-4o-mini',
   });
   return completion.choices[0].message.content;
 }

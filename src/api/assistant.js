@@ -16,11 +16,11 @@ export async function initAssistant() {
 
 /**
  * Возвращает результат обработки отправленного контекста нейронкой, с возможностью выбора сервиса
- * @param service - возможные варианты выбора сервиса
+ * @param model - llm model
  * @param messages
  * @returns {Promise<string>}
  */
-export async function assistantProcess(service, messages = []) {
+export async function assistantProcess(model, messages = []) {
   // добавляем промпт в историю сообщений
   const prompt = [
     {
@@ -30,11 +30,11 @@ export async function assistantProcess(service, messages = []) {
     ...messages,
   ];
 
-  switch (service) {
-    case 'vsegpt':
+  switch (model) {
+    case 'openai/gpt-4o-mini':
       if (VSEGPT_TOKEN) {
-        return await openaiProcess(prompt);
+        return await openaiProcess(model, prompt);
       }
   }
-  return await ollamaProcess(prompt);
+  return await ollamaProcess(model, prompt);
 }
