@@ -32,9 +32,10 @@ export async function assistantProcess(model, messages = []) {
 
   switch (model) {
     case 'openai/gpt-4o-mini':
-      if (VSEGPT_TOKEN) {
-        return await openaiProcess(model, prompt);
+      if (!VSEGPT_TOKEN) {
+        throw new Error('Invalid VSEGPT_TOKEN');
       }
+      return await openaiProcess(model, prompt);
   }
   return await ollamaProcess(model, prompt);
 }
