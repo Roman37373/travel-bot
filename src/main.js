@@ -87,7 +87,7 @@ async function onMessage(msg) {
   }
 
   // Получаем кол-во сообщений пользователя за указанный интервал, если сообщений больше лимита - отправляем ошибку
-  const chatLastMessagesCount = await messageGetCountMessage(msg.chat.id, 1);
+  const chatLastMessagesCount = await messageGetCountMessage(msg.chat.id, 1/6);
   if (chatLastMessagesCount > 5) {
     await sendMessage(chat._id, iconError + labelErrorAccessLimit);
     return;
