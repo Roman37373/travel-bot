@@ -1,7 +1,7 @@
 import TelegramBot from 'node-telegram-bot-api'; // Библиотека для работы с Telegram
+import {initMongo} from './tools/mongo.js'; // Модуль для работы с базой данных
 import {chatCreateItem, chatGetItem} from './api/chat.js';  // Модуль для работы с чатом
-import {messageCreateItem, messageGetList, messageUpdateItem} from './api/message.js'; // Модуль для работы с сообщением
-import {initMongo} from './tools/mongo.js';
+import {messageCreateItem, messageGetCountMessage, messageGetList, messageUpdateItem} from './api/message.js'; // Модуль для работы с сообщением
 import {assistantProcess, initAssistant} from './api/assistant.js';  // Модуль для работы с ассистентом LLM
 import {TELEGRAM_TOKEN} from './config.js'; // Файл конфигурации
 
@@ -15,6 +15,18 @@ const bot = new TelegramBot(TELEGRAM_TOKEN, {
   webHook: false,
 });
 
+const iconError            = '⚠️ ';
+const iconStartMessage     = '👋 ';
+const iconAssistantProcess = '🤔 ';
+
+const labelErrorAccessDenied = '_Доступ запрещен_';
+const labelErrorAccessLimit  = '_Превышен лимит сообщений_';
+const labelErrorBadCommand   = '_Команда не существует!_';
+
+const labelMessageStart     = 'Здравствуйте, я готов помочь Вам выбрать место для проведения досуга. Напишите, пожалуйста, где Вы находитесь и чем бы хотели заняться';
+const labelMessageAwait     = '_Дайте подумать..._';
+const labelMessageInProcess = '_Подождите, я еще думаю..._';
+
 /**
  * Обработка ошибок Telegram
  * @param error
@@ -22,6 +34,18 @@ const bot = new TelegramBot(TELEGRAM_TOKEN, {
  */
 async function onPollingError(error) {
   console.log('polling_error', error.code);
+}
+
+/**
+ * Отправка сообщений Пользователю
+ * @param chatId
+ * @param text
+ * @returns {Promise<*>}
+ */
+async function sendMessage(chatId, text) {
+  return await bot.sendMessage(chatId, text, {
+    parse_mode: 'Markdown',
+  });
 }
 
 /**
@@ -46,7 +70,26 @@ async function onMessage(msg) {
 
   // Возвращаем ошибку если чат деактивирован
   if (!chat?.active) {
-    await bot.sendMessage(chat._id, 'Access denied');
+    await sendMessage(chat._id, iconError + labelErrorAccessDenied);
+    return;
+  }
+  // Проверяем является ли сообщение командой
+  if (msg.text[0] === '/') {
+    // Возвращаем "Hello Message"
+    if (msg.text.indexOf('/start') === 0) {
+      await sendMessage(chat._id, iconStartMessage + labelMessageStart);
+      return;
+    }
+
+    // Возвращаем ошибку если команда не существует
+    await sendMessage(chat._id, iconError + labelErrorBadCommand);
+    return;
+  }
+
+  // Получаем кол-во сообщений пользователя за указанный интервал, если сообщений больше лимита - отправляем ошибку
+  const chatLastMessagesCount = await messageGetCountMessage(msg.chat.id, 1);
+  if (chatLastMessagesCount > 5) {
+    await sendMessage(chat._id, iconError + labelErrorAccessLimit);
     return;
   }
 
@@ -55,7 +98,7 @@ async function onMessage(msg) {
 
   // Ограничиваем возможность задавать вопросы пользователем до получения ответа от нейронки
   if (oldMessages.length && !oldMessages[0].answer) {
-    await bot.sendMessage(chat._id, '🤔 Подождите, я еще думаю...');
+    await sendMessage(chat._id, iconAssistantProcess + labelMessageInProcess);
     return;
   }
 
@@ -88,16 +131,16 @@ async function onMessage(msg) {
     answer,
     waitMessage,
   ] = await Promise.all([
-    assistantProcess('vsegpt', messages), // Отправляем контекст и ждем ответ
-    bot.sendMessage(chat._id, '🤔 Дайте подумать...'), // Отправляем пользователю сообщение заглушку
+    assistantProcess('openai/gpt-4o-mini', messages), // Отправляем контекст и ждем ответ
+    sendMessage(chat._id, iconAssistantProcess + labelMessageAwait), // Отправляем пользователю сообщение заглушку
   ]);
   if (waitMessage && waitMessage.message_id) {
-    await bot.deleteMessage(chat._id, waitMessage.message_id); // удаляем сообщени заглушку
+    await bot.deleteMessage(chat._id, waitMessage.message_id); // удаляем сообщение заглушку
   }
 
   await Promise.all([
     messageUpdateItem(message._id, answer), // Сохраняем ответ
-    bot.sendMessage(chat._id, answer), // Отправляем ответ пользователю
+    sendMessage(chat._id, answer), // Отправляем ответ пользователю
   ]);
 }
 
@@ -106,7 +149,7 @@ async function onMessage(msg) {
  * @returns {Promise<void>}
  */
 async function bootstrap() {
-  //
+  // Подготавливаем к работе базу данных
   await initMongo();
 
   // Подготавливаем к работе ассистента

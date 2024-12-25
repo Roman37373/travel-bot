@@ -32,3 +32,7 @@ export async function mongoUpdateOne(collection, filter = {}, $set) {
 export async function mongoGetList(collection, filter = {}, sort = {}, limit) {
   return await db.collection(collection).find(filter).sort(sort).limit(limit).toArray();
 }
+
+export async function mongoGetCount(collection, filter = {}) {
+  return await db.collection(collection).countDocuments(filter);
+}

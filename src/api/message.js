@@ -1,4 +1,4 @@
-import {mongoInsertOne, mongoUpdateOne, mongoGetList} from '../tools/mongo.js';
+import {mongoInsertOne, mongoUpdateOne, mongoGetList, mongoGetCount} from '../tools/mongo.js';
 
 /**
  * Сохраняет сообщение чата
@@ -43,4 +43,20 @@ export async function messageUpdateItem(_id, answer) {
  */
 export async function messageGetList(chatId) {
   return await mongoGetList('message', {chatId}, {stamp: -1}, 3);
+}
+
+/**
+ * Возвращает количество сообщений для чата с возможностью указать интервал времени
+ * @param chatId
+ * @param hour
+ * @returns {Promise<*>}
+ */
+export async function messageGetCountMessage(chatId, hour = 0) {
+  const filter = {chatId};
+  if (hour > 0) {
+    filter.created = {
+      $gt: Date.now() - (hour * 60 * 60e3),
+    };
+  }
+  return await mongoGetCount('message', filter);
 }
