@@ -21,7 +21,6 @@ if (MONGO_USER && MONGO_PASS) {
 
 const mongo = new MongoClient(MONGO_URL, mongoConfig);
 
-const mongo = new MongoClient(MONGO_URL);
 let db;
 
 export async function initMongo() {
