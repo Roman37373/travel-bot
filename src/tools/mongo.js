@@ -1,5 +1,5 @@
 import {MongoClient} from 'mongodb';
-import {MONGO_DB, MONGO_URL} from '../config.js'; // Файл конфигурации
+import {MONGO_URL, MONGO_DB, MONGO_USER, MONGO_PASS} from '../config.js'; // Файл конфигурации
 
 if(!MONGO_DB) {
   throw new Error('MONGO_DB is required');
@@ -8,6 +8,18 @@ if(!MONGO_DB) {
 if(!MONGO_URL) {
   throw new Error('MONGO_URL is required');
 }
+
+const mongoConfig = {};
+
+if (MONGO_USER && MONGO_PASS) {
+  mongoConfig.authSource = MONGO_DB;
+  mongoConfig.auth = {
+    username: MONGO_USER,
+    password: MONGO_PASS,
+  };
+}
+
+const mongo = new MongoClient(MONGO_URL, mongoConfig);
 
 const mongo = new MongoClient(MONGO_URL);
 let db;
