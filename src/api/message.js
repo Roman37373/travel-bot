@@ -21,7 +21,7 @@ export async function messageCreateItem(chatId, text) {
 }
 
 /**
- * Сохранет ответ в существующее сообщение
+ * Сохраняет ответ в существующее сообщение
  * @param _id
  * @param answer
  * @returns {Promise<void>}
@@ -32,17 +32,16 @@ export async function messageUpdateItem(_id, answer) {
     answer: answer,
   };
   await mongoUpdateOne('message', {_id}, $set);
-  // chatMessages[chatId][messageIndex].stamp = Date.now();
-  // chatMessages[chatId][messageIndex].answer = answer;
 }
 
 /**
  * Возвращает сообщения чата
  * @param chatId
+ * @param limit
  * @returns {Promise<*|*[]>}
  */
-export async function messageGetList(chatId) {
-  return await mongoGetList('message', {chatId}, {stamp: -1}, 3);
+export async function messageGetList(chatId, limit = 5) {
+  return await mongoGetList('message', {chatId}, {stamp: -1}, limit);
 }
 
 /**
