@@ -73,6 +73,7 @@ async function onMessage(msg) {
     await sendMessage(chat._id, iconError + labelErrorAccessDenied);
     return;
   }
+
   // Проверяем является ли сообщение командой
   if (msg.text[0] === '/') {
     // Возвращаем "Hello Message"
@@ -87,19 +88,23 @@ async function onMessage(msg) {
   }
 
   // Получаем кол-во сообщений пользователя за указанный интервал, если сообщений больше лимита - отправляем ошибку
-  const chatLastMessagesCount = await messageGetCountMessage(msg.chat.id, 1/6);
-  if (chatLastMessagesCount > 5) {
-    await sendMessage(chat._id, iconError + labelErrorAccessLimit);
-    return;
+  if (!chat.admin) {
+    const chatLastMessagesCount = await messageGetCountMessage(chat._id, 1 / 6);
+    if (chatLastMessagesCount > 5) {
+      await sendMessage(chat._id, iconError + labelErrorAccessLimit);
+      return;
+    }
   }
 
-  // Подгружаем старые сообщения чата
-  const oldMessages = await messageGetList(chat._id);
+  // Получаем заданное количество последних сообщений
+  const oldMessages = await messageGetList(chat._id, 10);
 
   // Ограничиваем возможность задавать вопросы пользователем до получения ответа от нейронки
-  if (oldMessages.length && !oldMessages[0].answer) {
-    await sendMessage(chat._id, iconAssistantProcess + labelMessageInProcess);
-    return;
+  if (!chat.admin) {
+    if (oldMessages.length && !oldMessages[0].answer) {
+      await sendMessage(chat._id, iconAssistantProcess + labelMessageInProcess);
+      return;
+    }
   }
 
   // Создаем новое сообщение для чата
